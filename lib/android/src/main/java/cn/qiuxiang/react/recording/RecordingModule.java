@@ -49,21 +49,6 @@ class RecordingModule extends ReactContextBaseJavaModule {
 
         // for parameter description, see
         // https://developer.android.com/reference/android/media/AudioRecord.html
-
-//         int sampleRateInHz = 44100;
-//         if (options.hasKey("sampleRate")) {
-//             sampleRateInHz = options.getInt("sampleRate");
-//         }
-        
-        int sampleRateInHz;
-        
-        for (int rate : new int[] {44100, 22050, 16000, 11025, 8000}) {  // add the rates you wish to check against
-            int bufferSize = AudioRecord.getMinBufferSize(rate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-            if (bufferSize > 0) {
-                sampleRateInHz = rate;
-                break;
-            }
-        }
         
         int channelConfig = AudioFormat.CHANNEL_IN_MONO;
         if (options.hasKey("channelsPerFrame")) {
@@ -91,12 +76,25 @@ class RecordingModule extends ReactContextBaseJavaModule {
             this.bufferSize = 8192;
         }
 
-        audioRecord = new AudioRecord(
-                MediaRecorder.AudioSource.MIC,
-                sampleRateInHz,
-                channelConfig,
-                audioFormat,
-                this.bufferSize * 2);
+        int initializedCorrectly = -1;
+        int sampleRateInHz = 44100;
+
+        for (int rate : new int[] {44100, 22050, 16000, 11025, 8000}) {
+            sampleRateInHz = rate;
+            audioRecord = new AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    sampleRateInHz,
+                    channelConfig,
+                    audioFormat,
+                    this.bufferSize * 2);
+
+            initializedCorrectly = audioRecord.getState();
+
+            if (initializedCorrectly == AudioRecord.STATE_INITIALIZED) {
+                break;
+            }
+        }
+
 
         recordingThread = new Thread(new Runnable() {
             public void run() {
