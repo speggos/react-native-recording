@@ -11,6 +11,8 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.facebook.react.bridge.Promise;
+
 
 class RecordingModule extends ReactContextBaseJavaModule {
     private static AudioRecord audioRecord;
@@ -31,7 +33,7 @@ class RecordingModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void init(ReadableMap options) {
+    public void init(ReadableMap options, Promise resultPromise) {
         if (eventEmitter == null) {
             eventEmitter = reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class);
         }
@@ -48,11 +50,21 @@ class RecordingModule extends ReactContextBaseJavaModule {
         // for parameter description, see
         // https://developer.android.com/reference/android/media/AudioRecord.html
 
-        int sampleRateInHz = 44100;
-        if (options.hasKey("sampleRate")) {
-            sampleRateInHz = options.getInt("sampleRate");
+//         int sampleRateInHz = 44100;
+//         if (options.hasKey("sampleRate")) {
+//             sampleRateInHz = options.getInt("sampleRate");
+//         }
+        
+        int sampleRateInHz;
+        
+        for (int rate : new int[] {44100, 22050, 16000, 11025, 8000}) {  // add the rates you wish to check against
+            int bufferSize = AudioRecord.getMinBufferSize(rate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+            if (bufferSize > 0) {
+                sampleRateInHz = rate;
+                break;
+            }
         }
-
+        
         int channelConfig = AudioFormat.CHANNEL_IN_MONO;
         if (options.hasKey("channelsPerFrame")) {
             int channelsPerFrame = options.getInt("channelsPerFrame");
@@ -91,6 +103,8 @@ class RecordingModule extends ReactContextBaseJavaModule {
                 recording();
             }
         }, "RecordingThread");
+        
+        resultPromise.resolve(sampleRateInHz);
     }
 
     @ReactMethod
