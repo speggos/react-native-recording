@@ -79,7 +79,7 @@ class RecordingModule extends ReactContextBaseJavaModule {
         int initializedCorrectly = -1;
         int sampleRateInHz = 44100;
 
-        for (int rate : new int[] {44100, 22050, 16000, 11025, 8000}) {
+        for (int rate : new int[] {44100, 48000, 22050, 16000, 11025, 8000}) {
             sampleRateInHz = rate;
             audioRecord = new AudioRecord(
                     MediaRecorder.AudioSource.MIC,
